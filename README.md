@@ -3,6 +3,8 @@
 A small browser game about getting a transaction included, plus the devlog
 tooling that posts about it.
 
+![a run in progress: walls with shrinking gaps, one chaser closing in](docs/frame.png)
+
 No dependencies, no build step, no wallet. Two files matter: the engine, and the
 generator that turns work on the engine into drafts for X.
 

@@ -59,6 +59,14 @@ export function draw(ctx, s, view) {
     }
   }
 
+  // ground strip under the play area, so the frame ends on something
+  ctx.fillStyle = PALETTE.cityNear;
+  ctx.fillRect(0, cfg.world.floor + 2, W, H - cfg.world.floor - 2);
+  ctx.fillStyle = PALETTE.sky;
+  for (let x = (Math.floor(view.scroll) % 8) - 8; x < W; x += 8) {
+    ctx.fillRect(x, cfg.world.floor + 5, 4, 1);
+  }
+
   // play area rails
   ctx.fillStyle = PALETTE.rail;
   ctx.fillRect(0, cfg.world.ceil - 2, W, 2);
