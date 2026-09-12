@@ -10,7 +10,7 @@ generator that turns work on the engine into drafts for X.
 
 ```
 npm start       # http://localhost:8080
-npm test        # 14 tests, no framework
+npm test        # 15 tests, no framework
 npm run sim     # headless balance run, writes data/sim-latest.json
 npm run devlog  # a draft post about what changed, with its receipts
 ```
@@ -93,8 +93,8 @@ to send anything with a lint error.
 
 ```
 export X_API_KEY=… X_API_SECRET=… X_ACCESS_TOKEN=… X_ACCESS_SECRET=…
-node tools/x-post.js posts/2026-09-12-balance.md        # prints, posts nothing
-node tools/x-post.js posts/2026-09-12-balance.md --yes  # opener, then replies
+node tools/x-post.js posts/2026-09-12-build.md        # prints, posts nothing
+node tools/x-post.js posts/2026-09-12-build.md --yes  # opener, then replies
 ```
 
 Media is deliberately not supported. Clips get looked at frame by frame for
