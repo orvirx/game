@@ -24,6 +24,7 @@ const FIXTURE_FACTS = {
   git: {
     commits: 4, filesChanged: 6, insertions: 210, deletions: 33,
     since: '2026-09-10', headSha: 'abc1234',
+    topFile: 'src/engine/game.js',
     subjects: ['fix: chaser no longer kills on contact'],
     latestSubject: 'fix: chaser no longer kills on contact',
     fixSubjects: ['fix: chaser no longer kills on contact'], fixes: 1,
@@ -183,6 +184,15 @@ test('a format that needs a human observation refuses to invent one', () => {
   let refused = false;
   try { buildDraft('note', FIXTURE_FACTS, { date: '2026-09-12' }); } catch { refused = true; }
   assert(refused, 'the note format made something up');
+});
+
+test('formats refuse to run when the work behind them does not exist', () => {
+  const empty = { ...FIXTURE_FACTS, git: { ...FIXTURE_FACTS.git, commits: 0, fixSubjects: [], latestSubject: '' } };
+  for (const kind of ['build', 'broke']) {
+    let refused = false;
+    try { buildDraft(kind, empty, { date: '2026-09-12' }); } catch { refused = true; }
+    assert(refused, `${kind} wrote a post about work that did not happen`);
+  }
 });
 
 // ---------------------------------------------------------------- run

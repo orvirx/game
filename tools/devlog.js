@@ -59,17 +59,28 @@ function gitFacts() {
         return { sha, date, subject: subject ?? '' };
       })
     : [];
-  const statArgs = ['diff', '--shortstat'];
-  if (range) statArgs.push(range);
-  else if (commits.length) statArgs.push(`${commits[commits.length - 1].sha}~1..HEAD`);
-  const stat = git(statArgs);
-  const num = (re) => { const m = stat.match(re); return m ? Number(m[1]) : 0; };
+  // numstat over the same commit selection: works on a root commit too, where
+  // sha~1 does not exist
+  const statArgs = ['log', '--numstat', '--pretty=tformat:'];
+  if (range) statArgs.push(range); else statArgs.push('--max-count=40');
+  const churn = { insertions: 0, deletions: 0, files: new Map() };
+  for (const line of git(statArgs).split('\n')) {
+    const m = line.match(/^(\d+|-)\t(\d+|-)\t(.+)$/);
+    if (!m) continue;
+    const added = m[1] === '-' ? 0 : Number(m[1]);
+    const removed = m[2] === '-' ? 0 : Number(m[2]);
+    churn.insertions += added;
+    churn.deletions += removed;
+    churn.files.set(m[3], (churn.files.get(m[3]) || 0) + added + removed);
+  }
+  const ranked = [...churn.files.entries()].sort((a, b) => b[1] - a[1]);
   const fixes = commits.filter((c) => /^(fix|revert)[(:]/i.test(c.subject));
   return {
     commits: commits.length,
-    filesChanged: num(/(\d+) files? changed/),
-    insertions: num(/(\d+) insertions?/),
-    deletions: num(/(\d+) deletions?/),
+    filesChanged: churn.files.size,
+    insertions: churn.insertions,
+    deletions: churn.deletions,
+    topFile: ranked.length ? ranked[0][0] : '',
     since: (lastEntry && lastEntry.date ? lastEntry.date : (commits[commits.length - 1] || {}).date || '').slice(0, 10),
     headSha: git(['rev-parse', '--short', 'HEAD']),
     subjects: commits.map((c) => c.subject),
@@ -181,10 +192,9 @@ is that a difficulty curve or a cliff with extra steps`,
 
 ${f.git.insertions} lines in, ${f.git.deletions} out, across ${f.git.filesChanged} files
 
-most of it went into the bit that decides where the
-next gap goes, which i have now rewritten twice`,
+the biggest single chunk of that is ${f.git.topFile}`,
 
-    (f) => `spent the evening on one thing: ${f.git.latestSubject}
+    (f) => `one thing today: ${f.git.latestSubject}
 
 ${f.git.insertions} lines for that, which feels like too many,
 but the ${f.tests.total} tests still pass so it stays`,
@@ -196,12 +206,12 @@ but the ${f.tests.total} tests still pass so it stays`,
 ${f.tests.passed} of ${f.tests.total} tests passing now
 
 the one that caught it replays the same seed twice and
-compares the states, took ten minutes to write`,
+compares the two states`,
 
     (f) => `${f.brokeSubject}
 
 found it because the sim runs off a seed, and two runs
-of the same seed stopped matching after one frame
+of the same seed stopped matching
 
 no idea how long that would have taken by hand`,
   ],
@@ -250,10 +260,16 @@ function pick(list, salt) {
 export function buildDraft(kind, facts, opts = {}) {
   const f = { ...facts };
   f.commitWord = facts.git.commits === 1 ? '1 commit' : `${facts.git.commits} commits`;
-  f.brokeSubject = facts.git.fixSubjects[0] || facts.git.latestSubject;
+  f.brokeSubject = facts.git.fixSubjects[0] || '';
   f.note = opts.note || '';
   const list = TEMPLATES[kind];
   if (!list) throw new Error(`unknown kind: ${kind}`);
+  if (kind === 'build' && facts.git.commits === 0) {
+    throw new Error('nothing committed since the last draft — there is nothing to report yet');
+  }
+  if (kind === 'broke' && !f.brokeSubject) {
+    throw new Error('no fix commit to write about — this format reports a real one');
+  }
   if (kind === 'note' && !f.note) {
     throw new Error('this format needs a real observation: pass --note="..." — it will not be invented');
   }
