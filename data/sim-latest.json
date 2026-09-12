@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-09-12T20:40:51Z",
+  "runs": 2000,
+  "jitter": 6,
+  "blocks": {
+    "median": 57,
+    "mean": 56.4,
+    "p10": 40,
+    "p90": 71,
+    "max": 103,
+    "min": 22
+  },
+  "seconds": {
+    "median": 41.27,
+    "max": 59.03
+  },
+  "deaths": {
+    "wall": {
+      "runs": 2000,
+      "pct": 100
+    }
+  },
+  "tightLineRate": 89,
+  "sandwichesPerRun": 9.68,
+  "deathsAfterSandwichPct": 61.2,
+  "sandwichBlameWindowSeconds": 1.5,
+  "timedOutRuns": 0
+}

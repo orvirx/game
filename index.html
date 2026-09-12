@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>mempool</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; background: #080c11; color: #5c7a91;
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; gap: 10px; padding: 12px; box-sizing: border-box;
+  }
+  canvas { image-rendering: pixelated; border: 1px solid #1b2c3c; touch-action: none; }
+  .bar { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; justify-content: center; }
+  a { color: #7fd4ff; text-decoration: none; }
+  body.record .bar { display: none; }
+</style>
+</head>
+<body>
+  <canvas id="game" width="270" height="270"></canvas>
+  <div class="bar">
+    <span>mempool</span>
+    <span id="seed">seed —</span>
+    <span>arrows move · space burns gas</span>
+    <a href="https://github.com/orvirx/game">source</a>
+  </div>
+  <script type="module">
+    if (new URLSearchParams(location.search).get('record') === '1') document.body.classList.add('record');
+  </script>
+  <script type="module" src="./src/web/main.js"></script>
+</body>
+</html>

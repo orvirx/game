@@ -1,0 +1,15 @@
+{
+  "name": "mempool",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "a small browser game about getting a transaction included, and a devlog generator that only posts numbers it can re-run",
+  "scripts": {
+    "start": "node tools/serve.js",
+    "test": "node tools/test.js",
+    "sim": "node tools/sim.js",
+    "devlog": "node tools/devlog.js",
+    "post": "node tools/x-post.js"
+  },
+  "engines": { "node": ">=20" }
+}
