@@ -11,8 +11,18 @@ import { hashSeed } from '../engine/rng.js';
 
 const cfg = DEFAULT_CONFIG;
 const params = new URLSearchParams(location.search);
-const record = params.get('record') === '1';
+const record = params.get('record') === '1' || window.MEMPOOL_RECORD === true;
 const fixedSeed = params.get('seed') ? Number(params.get('seed')) >>> 0 : null;
+
+// storage can throw in an embedded frame or a private window
+const store = {
+  get(key, fallback) {
+    try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; }
+  },
+  set(key, value) {
+    try { localStorage.setItem(key, value); } catch { /* best is session-only */ }
+  },
+};
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -21,23 +31,29 @@ const input = createInput(canvas, cfg);
 const view = {
   skyline: makeSkyline(hashSeed('mempool'), cfg.world.width, cfg.world.height),
   scroll: 0,
-  best: Number(localStorage.getItem('mempool.best') || 0),
+  best: Number(store.get('mempool.best', 0)) || 0,
   record,
   attract: true,
 };
 
+let requestedSeed = null;
 let game = newGame();
 let idleFrames = 0;
 
 function newGame() {
-  const seed = fixedSeed ?? (Math.random() * 0xffffffff) >>> 0;
+  const seed = requestedSeed ?? fixedSeed ?? (Math.random() * 0xffffffff) >>> 0;
+  requestedSeed = null;
   const g = createGame(seed, cfg);
-  document.getElementById('seed').textContent = `seed ${seed}`;
+  const label = document.getElementById('seed');
+  if (label) label.textContent = `seed ${seed}`;
   return g;
 }
 
 function resize() {
-  const scale = Math.max(1, Math.floor(Math.min(window.innerWidth, window.innerHeight - 72) / cfg.world.width));
+  // fit the box we are given, in whole pixels, so the art stays crisp
+  const box = canvas.parentElement ? canvas.parentElement.getBoundingClientRect().width : window.innerWidth;
+  const avail = Math.min(box || window.innerWidth, window.innerHeight - 120);
+  const scale = Math.max(1, Math.floor(avail / cfg.world.width));
   canvas.style.width = `${cfg.world.width * scale}px`;
   canvas.style.height = `${cfg.world.height * scale}px`;
 }
@@ -76,7 +92,7 @@ function tick() {
     if (wantsRestart || (!view.attract && idleFrames > 600)) {
       if (!view.attract) {
         view.best = Math.max(view.best, game.blocksPassed);
-        localStorage.setItem('mempool.best', String(view.best));
+        store.set('mempool.best', String(view.best));
       }
       view.attract = idleFrames > 600;
       game = newGame();
@@ -85,12 +101,29 @@ function tick() {
   }
   if (!game.alive && !view.attract) {
     view.best = Math.max(view.best, game.blocksPassed);
-    localStorage.setItem('mempool.best', String(view.best));
+    store.set('mempool.best', String(view.best));
   }
 }
 
 canvas.addEventListener('pointerdown', () => {
   if (!game.alive) { game = newGame(); idleFrames = 0; view.attract = false; }
 });
+
+// small control surface for a host page: a fresh run, a fixed seed, a clean frame
+window.mempool = {
+  newRun(seed) {
+    requestedSeed = seed === undefined ? null : seed >>> 0;
+    view.attract = false;
+    idleFrames = 0;
+    game = newGame();
+  },
+  setRecord(on) {
+    view.record = !!on;
+    document.body.classList.toggle('record', !!on);
+  },
+  get record() { return view.record; },
+  get best() { return view.best; },
+  get blocks() { return game.blocksPassed; },
+};
 
 requestAnimationFrame((t) => { last = t; frame(t); });
